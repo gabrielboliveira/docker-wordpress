@@ -2,6 +2,22 @@ server {
     listen 80;
     listen [::]:80;
 
+    server_name www.${APP_DOMAIN};
+
+    location ~ /.well-known/acme-challenge {
+        allow all;
+        root /var/www/html;
+    }
+
+    location / {
+        rewrite ^ http://${APP_DOMAIN}$request_uri? permanent;
+    }
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+
     server_name ${APP_DOMAIN} www.${APP_DOMAIN};
 
     index index.php index.html index.htm;
