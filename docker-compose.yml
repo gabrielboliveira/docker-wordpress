@@ -80,7 +80,6 @@ services:
         --email $APP_EMAIL
         --agree-tos
         --no-eff-email
-        --staging
         -d $APP_DOMAIN
         -d www.$APP_DOMAIN
     networks:
