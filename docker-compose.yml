@@ -1,0 +1,95 @@
+version: "3.7"
+
+services:
+  wordpress:
+    build:
+      context: ./images
+      dockerfile: Dockerfile.wordpress
+    init: true
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: ${DB_DATABASE}
+      WORDPRESS_DB_USER: ${DB_USERNAME}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+    - ./data/wordpress:/var/www/html
+    networks:
+      wordpress:
+    depends_on:
+    - mysql
+    # - redis
+
+  nginx:
+    image: nginx:alpine
+    init: true
+    restart: unless-stopped
+    ports:
+      - ${HTTP_PORT:-80}:80
+      - ${HTTPS_PORT:-80}:443
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      APP_HOST: wordpress
+      APP_PORT: 9000
+    volumes:
+    - ./data/wordpress:/var/www/html
+    - ./data/nginx:/etc/nginx/templates
+    - ./data/certbot:/etc/letsencrypt
+    networks:
+      wordpress:
+    depends_on:
+    - wordpress
+
+  mysql:
+    image: mysql:8.0
+    init: true
+    stop_grace_period: 30s
+    restart: unless-stopped
+    ports:
+    - ${DB_PORT:-3306}:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command: '--default-authentication-plugin=mysql_native_password'
+    volumes:
+    - ./data/mysql:/var/lib/mysql
+    networks:
+      wordpress:
+
+  # redis:
+  #   image: redis:alpine
+  #   init: true
+  #   stop_grace_period: 30s
+  #   restart: unless-stopped
+  #   volumes:
+  #   - redis:/data
+  #   networks:
+  #     wordpress:
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+    - ./data/certbot:/etc/letsencrypt
+    - ./data/wordpress:/var/www/html
+    command: >
+      certonly
+        --webroot
+        --webroot-path=/var/www/html
+        --email $APP_EMAIL
+        --agree-tos
+        --no-eff-email
+        --staging
+        -d $APP_DOMAIN
+        -d www.$APP_DOMAIN
+    networks:
+      wordpress:
+    depends_on:
+    - nginx
+
+# volumes:
+#   redis:
+
+networks:
+  wordpress:
