@@ -32,8 +32,8 @@ services:
       APP_HOST: wordpress
       APP_PORT: 9000
     volumes:
+    - ./nginx:/etc/nginx/templates
     - ./data/wordpress:/var/www/html
-    - ./data/nginx:/etc/nginx/templates
     - ./data/certbot:/etc/letsencrypt
     networks:
       wordpress:
