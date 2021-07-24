@@ -4,6 +4,7 @@ server {
 
     server_name ${APP_DOMAIN} www.${APP_DOMAIN};
 
+    # allow for letsencrypt to access via http
     location ~ /.well-known/acme-challenge {
         allow all;
         root /var/www/html;
